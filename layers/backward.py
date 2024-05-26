@@ -46,3 +46,10 @@ class MLP_Decode(nn.Module):
 
     def forward(self, x):
         return F.linear(x, self.weight, bias=None)
+    
+class CRATE_Transformer_Decode(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.attn = Attention_Encode()
+        self.norm1 = 
+        self.mlp = 
