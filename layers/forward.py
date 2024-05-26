@@ -66,3 +66,10 @@ class MLP_Encode(nn.Module):
 
     def forward(self, x):
         return F.relu((self.lambd / 2.0) + F.linear(x, self.weight, bias=None))
+    
+class CRATE_Transformer_Encode(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.attn = Attention_Encode()
+        self.norm1 = 
+        self.mlp = 

@@ -46,4 +46,3 @@ class MLP_Decode(nn.Module):
 
     def forward(self, x):
         return F.linear(x, self.weight, bias=None)
-        raise NotImplementedError

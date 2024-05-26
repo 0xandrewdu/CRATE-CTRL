@@ -10,6 +10,10 @@ from .backward import *
 from .forward import *
 
 
-class CRATE_CTRL_AE:
-    def __init__(self):
-        return
+class CRATE_CTRL:
+    def __init__(self, num_layers=16):
+        super().__init__()
+        self.encoders = []
+        self.decoders = []
+        for i in range(num_layers):
+            
