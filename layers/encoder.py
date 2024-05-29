@@ -19,7 +19,7 @@ class Attention_Encode(nn.Module):
         dropout: float = 0.,
         scale: float = 0.
     ) -> None:
-        super(MSSA, self).__init__()
+        super(Attention_Encode, self).__init__()
         self.num_heads = num_heads
         self.input_dim = dim
         self.dim_head = dim_head
@@ -53,8 +53,7 @@ class MLP_Encode(nn.Module):
     """
     Instead of using ISTA step, explicitly solves for non-negative LASSO solution. It turns out that for nonnegative
     LASSO, since D is orthogonal w.h.p. and stays so, the closed form LASSO solution is just ReLU of MLP on Z^{l + 1/2}
-    summed with a fixed bias term lambda/2!
-    TODO: try nonnegative vs unconstrained output
+    summed with a fixed bias term lambda/2
     TODO: instead of using lambd/2 as the bias term, maybe just include the bias in MLP lol
     """
     def __init__(self, dim, dropout=0., lambd=0.1):
@@ -68,8 +67,14 @@ class MLP_Encode(nn.Module):
         return F.relu((self.lambd / 2.0) + F.linear(x, self.weight, bias=None))
     
 class CRATE_Transformer_Encode(nn.Module):
-    def __init__(self):
+    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0.):
         super().__init__()
-        self.attn = Attention_Encode()
-        self.norm1 = 
-        self.mlp = 
+        self.norm_attn, self.norm_mlp = nn.LayerNorm(dim), nn.LayerNorm(dim)
+        self.attn = Attention_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout)
+        self.mlp = MLP_Encode(dim=dim, dropout=dropout)
+    
+    def forward(self, x):
+        z = self.norm_attn(x)
+        z_half = z + self.attn(z)
+        z_out = self.mlp(self.norm_mlp(z_half))
+        return z_out

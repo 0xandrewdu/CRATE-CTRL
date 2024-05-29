@@ -6,8 +6,8 @@ from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 import torch.nn.functional as F
 import torch.nn.init as init
-from .backward import *
-from .forward import *
+from .decoder import *
+from .encoder import *
 
 
 class CRATE_CTRL:
@@ -16,4 +16,3 @@ class CRATE_CTRL:
         self.encoders = []
         self.decoders = []
         for i in range(num_layers):
-            
