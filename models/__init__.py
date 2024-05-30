@@ -9,6 +9,7 @@ import torch.nn.init as init
 from layers.decoder import *
 from layers.encoder import *
 from utils.loss import get_2d_sincos_pos_embed
+from timm.models.vision_transformer import PatchEmbed
 
 
 class CRATE_CTRL_AE:
