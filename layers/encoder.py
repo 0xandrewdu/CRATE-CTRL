@@ -24,7 +24,6 @@ class Attention_Encode(nn.Module):
         self.input_dim = dim
         self.dim_head = dim_head
         self.dropout = nn.Dropout(dropout)
-        self.kp = num_heads * dim_head
         self.I = nn.Parameter(torch.eye(self.input_dim), requires_grad=False)
         self.UT = nn.Linear(dim, self.kp, bias=False) # note that nn.Linear right multiplies by W^T
         self.attend = nn.Softmax(dim=-1)
