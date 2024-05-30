@@ -44,6 +44,9 @@ def sparse_rate_reduction(
     TODO: Check that there isn't weird stuff going on with the scale of ZT, ZTU and the l1 penalty. I
     feel like adding a layernorm with no learnable scale / shift could be useful here. There might be some
     weird stuff going on in the RR term since epsilon isn't scale invariant either?
+    TODO: For labelled data, give an option to do (sparse) rate reduction classwise instead of by subspace
+    projections. Could be interesting if the unlabelled autoencoder naturally learns to project different
+    classes onto subspaces? Try training with num_heads = num_classes on CIFAR10.
     """
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])

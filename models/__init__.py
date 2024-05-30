@@ -13,8 +13,19 @@ from timm.models.vision_transformer import PatchEmbed
 
 
 class CRATE_CTRL_AE:
-    def __init__(self, depth=16, dim=32, num_heads=8, dim_head=8, dropout=0., step_size=1.):
+    def __init__(self, 
+                 depth=16, num_heads=8, dim_head=8, dropout=0., step_size=1., 
+                 image_size=32, patch_size=4, in_channels=3, embed_dim=48
+        ) -> None:
         super().__init__()
+
+
+        # set up patch embedding
+        assert image_size % patch_size == 0, "image dimensions must be compatible with patch size"
+        dim = image_size // patch_size
+        self.patch_embed = PatchEmbed(img_size=image_size, patch_size=patch_size,in_chans=in_channels, embed_dim=embed_dim)
+
+        # build transformer backbone
         self.encoders = nn.ModuleList([])
         self.decoders = nn.ModuleList([])
         for i in range(depth):
@@ -26,3 +37,5 @@ class CRATE_CTRL_AE:
             self.encoders.append(encoder)
             self.decoders.append(decoder)
         self.decoders = self.decoders[::-1]
+
+    def patchify(self, x):
