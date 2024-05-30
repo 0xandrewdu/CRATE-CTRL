@@ -10,7 +10,7 @@ from .decoder import *
 from .encoder import *
 
 
-class CRATE_CTRL:
+class CRATE_CTRL_AE:
     def __init__(self, num_layers=16):
         super().__init__()
         self.encoders = []

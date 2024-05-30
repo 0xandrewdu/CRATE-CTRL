@@ -32,7 +32,7 @@ class Attention_Decode(nn.Module):
     
     def forward(
             self,
-            ZT: torch.Tensor,
+            ZT: torch.Tensor, # b x n x d
         ) -> torch.Tensor:
         ZTU = rearrange(self.UT(ZT), 'b n (h d) -> b h n d', h=self.num_heads)
         UTZ = ZTU.transpose(-1, -2)
@@ -59,12 +59,13 @@ class MLP_Decode(nn.Module):
         return F.linear(x, self.weight, bias=None)
     
 class CRATE_Transformer_Decode(nn.Module):
-    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0.):
+    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., step_size=1.):
         super().__init__()
         self.norm_attn, self.norm_mlp = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.attn = Attention_Decode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout)
         self.mlp = MLP_Decode(dim=dim, dropout=dropout)
-    
+        self.step_size = step_size
+
     def forward(self, x):
         z_half = self.norm_attn(self.mlp(self.norm_mlp(x)))
         z_out = z_half - self.attn(z_half)

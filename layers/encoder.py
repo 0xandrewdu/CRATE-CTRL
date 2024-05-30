@@ -33,6 +33,7 @@ class Attention_Encode(nn.Module):
     def forward(
             self,
             ZT: torch.Tensor,
+            return_proj=False,
         ) -> torch.Tensor:
         # multiplies by the subspace bases by recovering them from the nn.Linear layer as opposed to the
         # new trainable weights W done in the paper's implementation--check with Druv to see if this is ok
@@ -47,7 +48,7 @@ class Attention_Encode(nn.Module):
         SSA_outs = rearrange(SSA_outs, 'b h n d -> b n (h d)')
 
         MSSA_out = torch.matmul(SSA_outs, UT)
-        return MSSA_out
+        return MSSA_out, ZTU if return_proj else MSSA_out
     
 class MLP_Encode(nn.Module):
     """
@@ -67,14 +68,21 @@ class MLP_Encode(nn.Module):
         return F.relu((self.lambd / 2.0) + F.linear(x, self.weight, bias=None))
     
 class CRATE_Transformer_Encode(nn.Module):
-    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0.):
+    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., step_size=1.):
         super().__init__()
         self.norm_attn, self.norm_mlp = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.attn = Attention_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout)
         self.mlp = MLP_Encode(dim=dim, dropout=dropout)
+        self.step_size = step_size
     
-    def forward(self, x):
-        z = self.norm_attn(x)
-        z_half = z + self.attn(z)
-        z_out = self.mlp(self.norm_mlp(z_half))
-        return z_out
+    def forward(self, x, return_proj=False):
+        def forward_helper(z):
+            z_half = (z + self.step_size * self.attn(z)) / (1 + self.step_size) # avoids div by 0 in the decoder step
+            z_out = self.mlp(self.norm_mlp(z_half))
+            return z_out
+        if return_proj:
+            z, ztu = self.norm_attn(x, return_proj=True)
+            return forward_helper(z), forward_helper(ztu)
+        else:
+            z = self.norm_attn(x)
+            return forward_helper(z)
