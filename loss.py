@@ -37,5 +37,8 @@ def sparse_rate_reduction(
     ) -> torch.Tensor:
     """
     Adds a LASSO penalization term to the above rate reduction function
+    TODO: Check that there isn't weird stuff going on with the scale of ZT, ZTU and the l1 penalty. I
+    feel like adding a layernorm with no learnable scale / shift might be the play. There might be some
+    weird stuff going on in the RR term since epsilon isn't scale invariant either?
     """
-    pass
+    return rate_reduction(ZT, ZTU, eps=eps) + lambd * ZT.abs().sum(dim=(-1, -2))
