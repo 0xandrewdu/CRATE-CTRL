@@ -68,5 +68,5 @@ class CRATE_Transformer_Decode(nn.Module):
 
     def forward(self, x):
         z_half = self.norm_attn(self.mlp(self.norm_mlp(x)))
-        z_out = z_half - self.attn(z_half)
+        z_out = (1 + self.step_size) * z_half - self.step_size * self.attn(z_half) # roughly inverts the forward step, assuming some regularity conditions
         return z_out
