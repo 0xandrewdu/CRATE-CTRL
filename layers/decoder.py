@@ -48,7 +48,7 @@ class Attention_Decode(nn.Module):
     
 class MLP_Decode(nn.Module):
     """
-    Weight tie with the corresponding encoder in forward.py
+    Weight tie with the corresponding encoder in forward.py (hence no weight init)
     """
     def __init__(self, dim, dropout=0.):
         super().__init__()

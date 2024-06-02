@@ -8,8 +8,9 @@ import torch.nn.functional as F
 import torch.nn.init as init
 from layers.decoder import *
 from layers.encoder import *
-from utils.loss import get_2d_sincos_pos_embed
+from utils.loss import sparse_rate_reduction
 from timm.models.vision_transformer import PatchEmbed
+from utils.pos_embed import get_2d_sincos_pos_embed
 
 
 class CRATE_CTRL_AE:
@@ -28,7 +29,7 @@ class CRATE_CTRL_AE:
         self.encoders = nn.ModuleList([])
         self.decoders = nn.ModuleList([])
         dim_head = dim // num_heads
-        for i in range(depth):
+        for _ in range(depth):
             encoder = CRATE_Transformer_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, step_size=step_size)
             decoder = CRATE_Transformer_Decode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, step_size=step_size)
             decoder.norm_attn.weight, decoder.norm_attn.bias = encoder.norm_attn.weight, encoder.norm_attn.bias
@@ -37,6 +38,14 @@ class CRATE_CTRL_AE:
             self.encoders.append(encoder)
             self.decoders.append(decoder)
         self.decoders = self.decoders[::-1]
+
+        self.patch_embed = PatchEmbed(image_size, patch_size, in_channels, dim, bias=True)
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.patch_embed.num_patches, dim), requires_grad=False)
+        self.initialize_weights()
+
+    def initialize_weights(self):
+        def 
+
 
     def patchify(self, imgs):
         """
@@ -69,7 +78,7 @@ class CRATE_CTRL_AE:
         return imgs
     
     def encode(self, x, training=False):
-        
+
 
     def decode(self, x)
 
