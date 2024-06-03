@@ -38,6 +38,7 @@ class CRATE_CTRL_AE:
             self.encoders.append(encoder)
             self.decoders.append(decoder)
         self.decoders = self.decoders[::-1]
+        self.norm = nn.LayerNorm(dim)
 
         self.patch_embed = PatchEmbed(image_size, patch_size, in_channels, dim, bias=True)
         self.pos_embed = nn.Parameter(torch.zeros(1, self.patch_embed.num_patches, dim), requires_grad=False)
@@ -84,9 +85,16 @@ class CRATE_CTRL_AE:
         for block in self.encoders[:-1]:
             x = block(x)
         Z, ZTU = self.encoders[-1](x, return_proj=True)
-        
+        return Z, ZTU
 
     def decode(self, x):
-
+        for block in self.decoders:
+            x = block(x)
+        x = self.norm(x)
+        return x
 
     def forward(self, x):
+        Z, ZTU = self.encode(x)
+        x_hat = self.decode(Z)
+        Z_hat, ZTU_hat = self.encode(x_hat)
+        return x_hat, Z, ZTU, Z_hat, ZTU_hat
