@@ -63,21 +63,6 @@ class CRATE_CTRL_AE:
         nn.init.xavier_uniform_(w.view([w.shape[0], -1]))
         nn.init.constant_(self.patch_embed.proj.bias, 0)
 
-    def patchify(self, imgs):
-        """
-        imgs: (N, 3, H, W)
-        x: (N, L, patch_size**2 *3)
-        From https://github.com/Ma-Lab-Berkeley/CRATE/blob/main/model/crate_ae/crate_ae.py
-        """
-        p = self.patch_embed.patch_size[0]
-        assert imgs.shape[2] == imgs.shape[3] and imgs.shape[2] % p == 0
-
-        h = w = imgs.shape[2] // p
-        x = imgs.reshape(shape=(imgs.shape[0], 3, h, p, w, p))
-        x = torch.einsum('nchpwq->nhwpqc', x)
-        x = x.reshape(shape=(imgs.shape[0], h * w, p ** 2 * 3))
-        return x
-
     def unpatchify(self, x):
         """
         x: (N, L, patch_size**2 *3)
@@ -93,9 +78,15 @@ class CRATE_CTRL_AE:
         imgs = x.reshape(shape=(x.shape[0], 3, h * p, h * p))
         return imgs
     
-    def encode(self, x, training=False):
+    def encode(self, x):
+        x = self.patch_embed(x)
+        x = x + self.pos_embed
+        for block in self.encoders[:-1]:
+            x = block(x)
+        Z, ZTU = self.encoders[-1](x, return_proj=True)
+        
 
+    def decode(self, x):
 
-    def decode(self, x)
 
     def forward(self, x):
