@@ -16,7 +16,7 @@ from utils.pos_embed import get_2d_sincos_pos_embed
 class CRATE_CTRL_AE:
     def __init__(self, 
                  dim=None, depth=16, num_heads=8, dropout=0., step_size=1., 
-                 image_size=32, patch_size=4, in_channels=3,
+                 image_size=32, patch_size=4, in_channels=3, output_norm=nn.LayerNorm
         ) -> None:
         super().__init__()
 
@@ -38,7 +38,7 @@ class CRATE_CTRL_AE:
             self.encoders.append(encoder)
             self.decoders.append(decoder)
         self.decoders = self.decoders[::-1]
-        self.norm = nn.LayerNorm(dim)
+        self.norm = output_norm(dim)
 
         self.patch_embed = PatchEmbed(image_size, patch_size, in_channels, dim, bias=True)
         self.pos_embed = nn.Parameter(torch.zeros(1, self.patch_embed.num_patches, dim), requires_grad=False)
@@ -98,3 +98,16 @@ class CRATE_CTRL_AE:
         x_hat = self.decode(Z)
         Z_hat, ZTU_hat = self.encode(x_hat)
         return x_hat, Z, ZTU, Z_hat, ZTU_hat
+    
+
+#################################################################################
+#                                 Model Configs                                 #
+#################################################################################
+
+def CTRL_CIFAR10_Base(**kwargs):
+    model = CRATE_CTRL_AE(dim=8, depth=12, num_heads=10, image_size=32, patch_size=4, **kwargs)
+    return model
+
+model_configs = {
+    'CIFAR10-B': CTRL_CIFAR10_Base,
+}
