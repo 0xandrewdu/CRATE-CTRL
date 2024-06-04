@@ -16,7 +16,8 @@ from utils.pos_embed import get_2d_sincos_pos_embed
 class CRATE_CTRL_AE:
     def __init__(self, 
                  dim=None, depth=16, num_heads=8, dropout=0., step_size=1., 
-                 image_size=32, patch_size=4, in_channels=3, output_norm=nn.LayerNorm
+                 image_size=32, patch_size=4, in_channels=3, output_norm=F.layer_norm,
+                 output_mean=0, output_std=1
         ) -> None:
         super().__init__()
 
@@ -91,6 +92,7 @@ class CRATE_CTRL_AE:
         for block in self.decoders:
             x = block(x)
         x = self.norm(x)
+        x = self.unpatchify(x)
         return x
 
     def forward(self, x):
