@@ -26,6 +26,7 @@ import os
 
 from .utils.loss import *
 from .models import model_configs
+from .utils.training import *
 
 #################################################################################
 #                             Training Helper Functions                         #
@@ -230,7 +231,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    # Default args here will train DiT-XL/2 with the hyperparameters we used in our paper (except training iters).
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-path", type=str, required=True)
     parser.add_argument("--results-dir", type=str, default="results")
