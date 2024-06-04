@@ -1,5 +1,9 @@
 import argparse
 import os
+import math
+import torch
+from lion_pytorch import Lion
+
 from ..models import model_configs
 
 """
@@ -24,19 +28,10 @@ def get_args_parser():
     parser.add_argument("--ckpt-every", type=int, default=50_000)
     parser.add_argument("--ckpt-path", type=str, default=None)
 
-    parser.add_argument('--lr', '--learning-rate', default=0.0004, type=float,
-                        metavar='LR', help='initial learning rate', dest='lr')
-    parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
-                        help='momentum')
-    parser.add_argument('--wd', '--weight-decay', default=0.1, type=float,
-                        metavar='W', help='weight decay (default: 1e-4)',
-                        dest='weight_decay')
-
-    parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
-                        help='evaluate model on validation set')
-
-    parser.add_argument('--optimizer', default="AdamW", type=str,
-                        help='Optimizer to Use.')
+    parser.add_argument('--lr', '--learning-rate', type=float, default=0.0004)
+    parser.add_argument('--momentum', type=float, default=0.9)
+    parser.add_argument('--wd', '--weight-decay', type=float, default=0.1)
+    parser.add_argument('--optim', type=str, default="AdamW")
     return parser
 
 def clean_dirs():
@@ -54,6 +49,7 @@ def create_dirs():
 def training_setup(args, **kwargs):
     """
     Fetches model from checkpoints if provided and valid (file exists and same model), otherwise creates new model and optimizer
+    Made with https://github.com/Ma-Lab-Berkeley/CRATE/blob/main/main.py as reference
     """
 
     model_name, ckpt_path = args.model, args.ckpt_path
@@ -74,11 +70,29 @@ def training_setup(args, **kwargs):
                 print(f"Found valid checkpoint at {ckpt_path}, loading {model_name} weights from epoch {epoch}.")
 
     model = model_configs[model_name](**kwargs)
+
+    if args.optimizer == "AdamW":
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, 
+                                    betas=(0.9, 0.999), 
+                                    weight_decay=args.weight_decay)                      
+    elif args.optimizer == "Lion":
+        optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    else:
+        raise NotImplementedError
+    
+    warmup_steps = 20
+    lr_func = lambda step: min((step + 1) / (warmup_steps + 1e-8), 
+                               0.5 * (math.cos(step / args.epochs * math.pi) + 1))
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_func, verbose=True)
+
     if load_ckpt:
-        
+        checkpoint = torch.load(ckpt_path)
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
     else:
         print(f"Created new {model_name}.")
-    return model, optim, scheduler
+    return model, optimizer, scheduler
         
 
 def parse_ckpt_name(ckpt_path):
