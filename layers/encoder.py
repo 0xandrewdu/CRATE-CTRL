@@ -48,6 +48,7 @@ class Attention_Encode(nn.Module):
         SSA_outs = rearrange(SSA_outs, 'b h n d -> b n (h d)')
 
         MSSA_out = torch.matmul(SSA_outs, UT)
+        print(f'MSSA_out.shape: {MSSA_out.shape}')
         return MSSA_out, ZTU if return_proj else MSSA_out
     
 class MLP_Encode(nn.Module):
