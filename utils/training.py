@@ -131,7 +131,7 @@ def training_setup(args, **kwargs):
                 args.lambd_srr = ckpt['args'].lambd_srr
 
     model = model_configs[model_name](**kwargs)
-    model = DDP(model).cuda()
+    model = DDP(model.to(device))
 
     if args.optimizer == "AdamW":
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, 
