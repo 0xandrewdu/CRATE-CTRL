@@ -83,7 +83,10 @@ class CRATE_Transformer_Encode(nn.Module):
             ztu_out = self.mlp(self.norm_mlp(ztu))
             return z_out, ztu_out
         else:
+            print(x.shape)
             z = self.norm_attn(x)
+            print(z.shape)
+            print(self.attn(z).shape)
             z_half = (z + self.step_size * self.attn(z)) / (1 + self.step_size)
             z_out = self.mlp(self.norm_mlp(z_half))
             return z_out
