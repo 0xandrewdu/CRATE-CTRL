@@ -36,6 +36,7 @@ class Attention_Encode(nn.Module):
         ) -> torch.Tensor:
         # multiplies by the subspace bases by recovering them from the nn.Linear layer as opposed to the
         # new trainable weights W done in the paper's implementation--check with Druv to see if this is ok
+        print(f'return_proj: {return_proj}')
         ZTU = rearrange(self.UT(ZT), 'b n (h d) -> b h n d', h=self.num_heads)
         UTZ = ZTU.transpose(-1, -2)
         UT = self.UT(self.I).T
@@ -87,6 +88,7 @@ class CRATE_Transformer_Encode(nn.Module):
             z = self.norm_attn(x)
             print(z.shape)
             print(len(self.attn(z)))
+            print(len(self.attn(z, return_proj=False)))
             print(self.attn(z).shape)
             z_half = (z + self.step_size * self.attn(z)) / (1 + self.step_size)
             z_out = self.mlp(self.norm_mlp(z_half))
