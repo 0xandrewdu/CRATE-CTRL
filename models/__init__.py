@@ -15,7 +15,7 @@ from utils.pos_embed import get_2d_sincos_pos_embed
 
 class CRATE_CTRL_AE(nn.Module):
     def __init__(self, 
-                 dim=None, depth=16, num_heads=8, dropout=0., step_size=1., 
+                 dim=None, depth=16, num_heads=8, dim_head=None, dropout=0., step_size=1., 
                  image_size=32, patch_size=4, in_channels=3, output_norm=nn.LayerNorm,
                  output_mean=0, output_std=1
         ) -> None:
@@ -24,12 +24,17 @@ class CRATE_CTRL_AE(nn.Module):
         # set up patch embedding
         assert image_size % patch_size == 0, "image dimensions must be compatible with patch size"
         dim = dim or image_size // patch_size
+        dim_head = dim_head or dim // num_heads
+
+        if dim_head * num_heads > dim:
+            print('WARNING: dim_head * num_heads > dim. Subspaces will not be orthogonal.')
+
         self.patch_embed = PatchEmbed(img_size=image_size, patch_size=patch_size,in_chans=in_channels, embed_dim=dim)
 
         # build transformer backbone
         self.encoders = nn.ModuleList([])
         self.decoders = nn.ModuleList([])
-        dim_head = dim // num_heads
+
         for _ in range(depth):
             # NOTE: step_size is not true step size, see CRATE_Transformer forward()
             encoder = CRATE_Transformer_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, step_size=step_size)
@@ -108,7 +113,7 @@ class CRATE_CTRL_AE(nn.Module):
 #################################################################################
 
 def CTRL_CIFAR10_Base(**kwargs):
-    model = CRATE_CTRL_AE(dim=80, depth=12, num_heads=10, image_size=32, patch_size=4, **kwargs)
+    model = CRATE_CTRL_AE(dim=64, depth=12, num_heads=10, image_size=32, patch_size=4, **kwargs)
     return model
 
 model_configs = {
