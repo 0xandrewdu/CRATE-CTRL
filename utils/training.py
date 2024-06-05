@@ -32,7 +32,7 @@ def get_args_parser():
     parser.add_argument("--ckpt-path", type=str, default=None)
     parser.add_argument('--lr', '--learning-rate', type=float, default=0.0004)
     parser.add_argument('--momentum', type=float, default=0.9)
-    parser.add_argument('--wd', '--weight-decay', type=float, default=0.1)
+    parser.add_argument('--weight-decay', type=float, default=0.1)
     parser.add_argument('--optim', type=str, default="AdamW")
     parser.add_argument('--lambd_srr', type=float, default=0.1)
     parser.add_argument('--lambd_mse', type=float, default=0.5)
