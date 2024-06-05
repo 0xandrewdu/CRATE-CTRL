@@ -107,7 +107,7 @@ class CRATE_CTRL_AE:
 #################################################################################
 
 def CTRL_CIFAR10_Base(**kwargs):
-    model = CRATE_CTRL_AE(dim=8, depth=12, num_heads=10, image_size=32, patch_size=4, **kwargs)
+    model = CRATE_CTRL_AE(dim=80, depth=12, num_heads=10, image_size=32, patch_size=4, **kwargs)
     return model
 
 model_configs = {
