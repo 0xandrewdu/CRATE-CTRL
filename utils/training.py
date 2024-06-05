@@ -1,4 +1,6 @@
 import argparse
+import logging
+import datetime
 import os
 import math
 import torch
@@ -41,13 +43,47 @@ def clean_dirs():
     """
     raise NotImplementedError
 
-def create_dirs():
+def create_logger(logging_dir):
+    """
+    Create a logger that writes to a log file and stdout.
+    From https://github.com/facebookresearch/DiT/blob/main/train.py
+    """
+    if dist.get_rank() == 0:  # real logger
+        logging.basicConfig(
+            level=logging.INFO,
+            format='[\033[34m%(asctime)s\033[0m] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+            handlers=[logging.StreamHandler(), logging.FileHandler(f"{logging_dir}/log.txt")]
+        )
+        logger = logging.getLogger(__name__)
+    else:  # dummy logger (does nothing)
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+    return logger
+
+def create_dirs(results_dir, model_name):
     """
     Utility function to create directories for storing training checkpoints and logs
+
+    Made with https://github.com/facebookresearch/DiT/blob/main/train.py as reference
     """
     # pseudocode: create results directory if dne, then create {model-name}_{date-time} directory, then
     # create logs and ckpts subdirectories, return these two paths
-    raise NotImplementedError
+    rank = dist.get_rank()
+    if rank == 0:
+        os.makedirs(results_dir, exist_ok=True)
+        model_string_name = model_name.replace("/", "-")  # e.g., DiT-XL/2 --> DiT-XL-2 (for naming folders) // this shouldn't trigger btw
+        date_time_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+        experiment_dir = f"{results_dir}/{model_string_name}_{date_time_string}"  # Create an experiment folder
+        checkpoint_dir = f"{experiment_dir}/checkpoints"  # Stores saved model checkpoints
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        logger = create_logger(experiment_dir)
+        logger.info(f"Experiment directory created at {experiment_dir}")
+    else:
+        logger = create_logger(None)
+        checkpoint_dir = None
+    return logger, checkpoint_dir
+
 
 def training_setup(args, **kwargs):
     """
@@ -68,16 +104,21 @@ def training_setup(args, **kwargs):
     print(f"Starting rank={rank}, seed={seed}, world_size={dist.get_world_size()}.")
 
     model_name, ckpt_path = args.model, args.ckpt_path
+    
     if not model_name in model_configs.keys():
         print("Requested model name does not exist.")
         raise NotImplementedError
+    
     load_ckpt = bool(ckpt_path)
+    epoch = 0
+
     if load_ckpt:
         if not os.path.isfile(ckpt_path):
             print("Checkpoint file does not exist, creating new model.")
             load_ckpt = False
         else:
-            ckpt_model_name, epoch = parse_ckpt_name(ckpt_path)
+            ckpt = torch.load(ckpt_path)
+            ckpt_model_name, epoch = ckpt['model_name'], ckpt['epoch']
             if ckpt_model_name != model_name:
                 print("Checkpoint model type does not match requested model, creating new model.")
                 load_ckpt = False
@@ -102,17 +143,9 @@ def training_setup(args, **kwargs):
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_func, verbose=True)
 
     if load_ckpt:
-        checkpoint = torch.load(ckpt_path)
-        model.load_state_dict(checkpoint['state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        scheduler.load_state_dict(checkpoint['scheduler'])
+        model.load_state_dict(ckpt['state_dict'])
+        optimizer.load_state_dict(ckpt['optimizer'])
+        scheduler.load_state_dict(ckpt['scheduler'])
     else:
         print(f"Created new {model_name}.")
-    return model, optimizer, scheduler
-        
-
-def parse_ckpt_name(ckpt_path):
-    ckpt_filename = ckpt_path.split('/')[-1]
-    tokens = ckpt_filename.split('_') # NOTE: be careful with using underscores for spaces in filename, use dashes instead
-    ckpt_model_name, epoch = tokens[0], tokens[1] # TODO: add hyperparams in checkpoint names
-    return ckpt_model_name, epoch
+    return model, optimizer, scheduler, epoch

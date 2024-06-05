@@ -47,24 +47,6 @@ def cleanup():
     dist.destroy_process_group()
 
 
-def create_logger(logging_dir):
-    """
-    Create a logger that writes to a log file and stdout.
-    """
-    if dist.get_rank() == 0:  # real logger
-        logging.basicConfig(
-            level=logging.INFO,
-            format='[\033[34m%(asctime)s\033[0m] %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
-            handlers=[logging.StreamHandler(), logging.FileHandler(f"{logging_dir}/log.txt")]
-        )
-        logger = logging.getLogger(__name__)
-    else:  # dummy logger (does nothing)
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-    return logger
-
-
 def center_crop_arr(pil_image, image_size):
     """
     Center cropping implementation from ADM.
@@ -94,24 +76,14 @@ def main(args):
     """
     Trains a new DiT model.
     """
-    model, opt, sched = training_setup(args)
+    model, opt, sched, start_epoch = training_setup(args)
     rank = dist.get_rank()
     device = rank % torch.cuda.device_count()
 
     # Setup an experiment folder:
-    if rank == 0:
-        os.makedirs(args.results_dir, exist_ok=True)  # Make results folder (holds all experiment subfolders)
-        experiment_index = len(glob(f"{args.results_dir}/*"))
-        model_string_name = args.model.replace("/", "-")  # e.g., DiT-XL/2 --> DiT-XL-2 (for naming folders)
-        experiment_dir = f"{args.results_dir}/{experiment_index:03d}-{model_string_name}"  # Create an experiment folder
-        checkpoint_dir = f"{experiment_dir}/checkpoints"  # Stores saved model checkpoints
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        logger = create_logger(experiment_dir)
-        logger.info(f"Experiment directory created at {experiment_dir}")
-    else:
-        logger = create_logger(None)
+    logger, checkpoint_dir = create_dirs(args.results_dir, args.model)
 
-    logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
+    logger.info(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Setup data:
     transform = transforms.Compose([
@@ -148,15 +120,14 @@ def main(args):
     start_time = time()
 
     logger.info(f"Training for {args.epochs} epochs...")
-    for epoch in range(args.epochs):
+    for epoch in range(start_epoch, start_epoch + args.epochs):
         sampler.set_epoch(epoch)
         logger.info(f"Beginning epoch {epoch}...")
         for x, y in loader:
             x = x.to(device)
-            y = y.to(device)
-            with torch.no_grad():
-                # Map input images to latent space + normalize latents:
-                x = vae.encode(x).latent_dist.sample().mul_(0.18215)
+            y = y.to(device) # currently the label is not used for any purpose
+            
+            # TODO: convert this stuff to ctrl
             t = torch.randint(0, diffusion.num_timesteps, (x.shape[0],), device=device)
             model_kwargs = dict(y=y)
             loss_dict = diffusion.training_losses(model, x, t, model_kwargs)
@@ -164,7 +135,7 @@ def main(args):
             opt.zero_grad()
             loss.backward()
             opt.step()
-            update_ema(ema, model.module)
+            sched.step()
 
             # Log loss values:
             running_loss += loss.item()
@@ -185,13 +156,15 @@ def main(args):
                 log_steps = 0
                 start_time = time()
 
-            # Save DiT checkpoint:
+            # Save checkpoint:
             if train_steps % args.ckpt_every == 0 and train_steps > 0:
-                if rank == 0:
+                if checkpoint_dir:
                     checkpoint = {
+                        "epoch": epoch + 1,
+                        "model_name": args.model,
                         "model": model.module.state_dict(),
-                        "ema": ema.state_dict(),
-                        "opt": opt.state_dict(),
+                        "optimizer": opt.state_dict(),
+                        "scheduler" : sched.state_dict(),
                         "args": args
                     }
                     checkpoint_path = f"{checkpoint_dir}/{train_steps:07d}.pt"
