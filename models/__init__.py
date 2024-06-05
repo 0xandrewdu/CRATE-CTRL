@@ -27,6 +27,8 @@ class CRATE_CTRL_AE(nn.Module):
         dim_head = dim_head or dim // num_heads
         embed_dim = dim or (patch_size ** 2)
 
+        print(f'dim_head: {dim_head}')
+
         if dim_head * num_heads > dim:
             print('WARNING: dim_head * num_heads > dim. Subspaces will not be orthogonal.')
 
