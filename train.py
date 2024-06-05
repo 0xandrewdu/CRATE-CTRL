@@ -91,7 +91,7 @@ def main(args):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
     ])
-    
+
     #dataset = ImageFolder(args.data_path, transform=transform)
     dataset = CIFAR10(root='./data', train=True, download=True, transform=transform)
     
@@ -135,7 +135,7 @@ def main(args):
             
             opt.zero_grad()
             x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x)
-            loss = ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_srr=lambd_mse)
+            loss = ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse)
             loss.backward()
             opt.step()
             sched.step()
