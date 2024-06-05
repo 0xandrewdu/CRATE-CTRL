@@ -18,7 +18,7 @@ Includes command line argument parser, helpers for resuming training
 
 def get_args_parser():  
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-path", type=str, required=True)
+    parser.add_argument("--data-path", type=str, required=False)
     parser.add_argument("--results-dir", type=str, default="results")
     parser.add_argument("--model", type=str, choices=list(model_configs.keys()), default="CIFAR10-B")
     parser.add_argument("--image-size", type=int, choices=[32, 256, 512], default=32)
