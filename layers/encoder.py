@@ -75,13 +75,15 @@ class CRATE_Transformer_Encode(nn.Module):
         self.step_size = step_size
     
     def forward(self, x, return_proj=False):
-        def forward_helper(z_attn):
-            z_half = (z + self.step_size * z_attn) / (1 + self.step_size) # avoids div by 0 in the decoder step
+        if return_proj:
+            z = self.norm_attn(x)
+            mssa_out, ztu = self.attn(z, return_proj=True)
+            z_half = (z + self.step_size * mssa_out) / (1 + self.step_size)
+            z_out = self.mlp(self.norm_mlp(z_half))
+            ztu_out = self.mlp(self.norm_mlp(ztu))
+            return z_out, ztu_out
+        else:
+            z = self.norm_attn(x)
+            z_half = (z + self.step_size * self.attn(z)) / (1 + self.step_size)
             z_out = self.mlp(self.norm_mlp(z_half))
             return z_out
-        if return_proj:
-            z, ztu = self.attn(self.norm_attn(x), return_proj=True)
-            return forward_helper(z), forward_helper(ztu)
-        else:
-            z = self.attn(self.norm_attn(x))
-            return forward_helper(z)
