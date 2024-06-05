@@ -13,7 +13,7 @@ from timm.models.vision_transformer import PatchEmbed
 from utils.pos_embed import get_2d_sincos_pos_embed
 
 
-class CRATE_CTRL_AE:
+class CRATE_CTRL_AE(nn.Module):
     def __init__(self, 
                  dim=None, depth=16, num_heads=8, dropout=0., step_size=1., 
                  image_size=32, patch_size=4, in_channels=3, output_norm=nn.LayerNorm,
