@@ -17,7 +17,7 @@ class CRATE_CTRL_AE(nn.Module):
     def __init__(self, 
                  dim=None, depth=16, num_heads=8, dim_head=None, dropout=0., step_size=1., 
                  image_size=32, patch_size=4, in_channels=3, output_norm=nn.LayerNorm,
-                 embed_dim=None, output_mean=0, output_std=1
+                 output_mean=0, output_std=1
         ) -> None:
         super().__init__()
 
@@ -25,7 +25,7 @@ class CRATE_CTRL_AE(nn.Module):
         assert image_size % patch_size == 0, "image dimensions must be compatible with patch size"
         dim = dim or image_size // patch_size
         dim_head = dim_head or dim // num_heads
-        embed_dim = embed_dim or (patch_size ** 2)
+        embed_dim = dim or (patch_size ** 2)
 
         if dim_head * num_heads > dim:
             print('WARNING: dim_head * num_heads > dim. Subspaces will not be orthogonal.')
@@ -114,7 +114,7 @@ class CRATE_CTRL_AE(nn.Module):
 #################################################################################
 
 def CTRL_CIFAR10_Base(**kwargs):
-    model = CRATE_CTRL_AE(dim=64, depth=12, num_heads=10, image_size=32, patch_size=4, embed_dim=6, **kwargs)
+    model = CRATE_CTRL_AE(dim=6, depth=12, num_heads=10, image_size=32, patch_size=4, embed_dim=6, **kwargs)
     return model
 
 model_configs = {
