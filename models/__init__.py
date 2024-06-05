@@ -31,6 +31,7 @@ class CRATE_CTRL_AE(nn.Module):
         self.decoders = nn.ModuleList([])
         dim_head = dim // num_heads
         for _ in range(depth):
+            # NOTE: step_size is not true step size, see CRATE_Transformer forward()
             encoder = CRATE_Transformer_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, step_size=step_size)
             decoder = CRATE_Transformer_Decode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, step_size=step_size)
             decoder.norm_attn.weight, decoder.norm_attn.bias = encoder.norm_attn.weight, encoder.norm_attn.bias
