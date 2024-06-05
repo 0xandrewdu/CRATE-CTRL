@@ -31,7 +31,7 @@ class Attention_Decode(nn.Module):
     
     def forward(
             self,
-            ZT: torch.Tensor, # b x n x d
+            ZT: torch.Tensor, # b x n x dim
         ) -> torch.Tensor:
         ZTU = rearrange(self.UT(ZT), 'b n (h d) -> b h n d', h=self.num_heads)
         UTZ = ZTU.transpose(-1, -2)

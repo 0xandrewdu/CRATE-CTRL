@@ -49,12 +49,27 @@ class Attention_Encode(nn.Module):
         MSSA_out = torch.matmul(SSA_outs, UT)
         return (MSSA_out, ZTU) if return_proj else MSSA_out
     
-class MLP_Encode(nn.Module):
+class MLP_Encode_Nonnegative(nn.Module):
     """
     Instead of using ISTA step, explicitly solves for non-negative LASSO solution. It turns out that for nonnegative
     LASSO, since D is orthogonal w.h.p. and stays so, the closed form LASSO solution is just ReLU of MLP on Z^{l + 1/2}
     summed with a fixed bias term lambda/2
     TODO: instead of using lambd/2 as the bias term, maybe just include the bias in MLP lol
+    """
+    def __init__(self, dim, dropout=0., lambd=0.1):
+        super().__init__()
+        self.weight = nn.Parameter(torch.Tensor(dim, dim))
+        with torch.no_grad():
+            init.kaiming_uniform_(self.weight)
+        self.lambd: float = lambd
+
+    def forward(self, x):
+        return F.relu((self.lambd / 2.0) + F.linear(x, self.weight, bias=None))
+    
+class MLP_Encode(nn.Module):
+    """
+    Reverts to solution without assumption of orthogonality, but removes non-negativity from objective to make
+    sampling from latent support negatives
     """
     def __init__(self, dim, dropout=0., lambd=0.1):
         super().__init__()

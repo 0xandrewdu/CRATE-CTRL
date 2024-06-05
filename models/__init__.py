@@ -23,16 +23,15 @@ class CRATE_CTRL_AE(nn.Module):
 
         # set up patch embedding
         assert image_size % patch_size == 0, "image dimensions must be compatible with patch size"
-        dim = dim or image_size // patch_size
+        dim = dim or patch_size ** 2
         dim_head = dim_head or dim // num_heads
-        embed_dim = dim or (patch_size ** 2)
 
         print(f'dim_head: {dim_head}')
 
         if dim_head * num_heads > dim:
             print('WARNING: dim_head * num_heads > dim. Subspaces will not be orthogonal.')
 
-        self.patch_embed = PatchEmbed(img_size=image_size, patch_size=patch_size,in_chans=in_channels, embed_dim=embed_dim)
+        self.patch_embed = PatchEmbed(img_size=image_size, patch_size=patch_size,in_chans=in_channels, embed_dim=dim)
 
         # build transformer backbone
         self.encoders = nn.ModuleList([])
