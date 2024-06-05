@@ -113,6 +113,10 @@ def main(args):
 
     model.train()
 
+    # Get hyperparams
+    lambd_mse = args.lambd_mse
+    lambd_srr = args.lambd_srr
+
     # Variables for monitoring/logging purposes:
     train_steps = 0
     log_steps = 0
@@ -127,12 +131,9 @@ def main(args):
             x = x.to(device)
             y = y.to(device) # currently the label is not used for any purpose
             
-            # TODO: convert this stuff to ctrl
-            t = torch.randint(0, diffusion.num_timesteps, (x.shape[0],), device=device)
-            model_kwargs = dict(y=y)
-            loss_dict = diffusion.training_losses(model, x, t, model_kwargs)
-            loss = loss_dict["loss"].mean()
             opt.zero_grad()
+            x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x)
+            loss = ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_srr=lambd_mse)
             loss.backward()
             opt.step()
             sched.step()

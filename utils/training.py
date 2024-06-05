@@ -35,6 +35,8 @@ def get_args_parser():
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--wd', '--weight-decay', type=float, default=0.1)
     parser.add_argument('--optim', type=str, default="AdamW")
+    parser.add_argument('--lambd_srr', type=float, default=0.1)
+    parser.add_argument('--lambd_mse', type=float, default=0.5)
     return parser
 
 def clean_dirs():
@@ -124,6 +126,10 @@ def training_setup(args, **kwargs):
                 load_ckpt = False
             else:
                 print(f"Found valid checkpoint at {ckpt_path}, loading {model_name} weights from epoch {epoch}.")
+                args.weight_decay = ckpt['args'].weight_decay
+                args.lr = ckpt['args'].lr
+                args.lambd_mse = ckpt['args'].lambd_mse
+                args.lambd_srr = ckpt['args'].lambd_srr
 
     model = model_configs[model_name](**kwargs)
     model = DDP(model).cuda()

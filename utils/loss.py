@@ -51,3 +51,18 @@ def sparse_rate_reduction(
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
     return rate_reduction(ZT, ZTU, eps=eps) + lambd * ZT.abs().sum(dim=(-1, -2))
+
+def ctrl_objective(
+        ZT: torch.Tensor, # b x n x d
+        ZTU: torch.Tensor, # b x h x n x d
+        ZT_hat: torch.Tensor, # b x n x d
+        ZTU_hat: torch.Tensor, # b x h x n x d
+        eps: float = 0.01,
+        lambd_srr: float = 0.1,
+        lambd_mse: float = 0.5,
+        normalize: bool = False,
+    ) -> torch.Tensor:
+    mse = torch.mean((ZT - ZTU_hat) ** 2)
+    srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize)
+    srr_hat = sparse_rate_reduction(ZT_hat, ZTU_hat, lambd=lambd_srr, eps=eps, normalize=normalize)
+    return lambd_mse * mse + srr + srr_hat
