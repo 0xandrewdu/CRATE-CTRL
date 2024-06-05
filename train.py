@@ -21,9 +21,9 @@ from copy import deepcopy
 from glob import glob
 from time import time
 
-from .utils.loss import *
-from .models import model_configs
-from .utils.training import *
+from utils.loss import *
+from models import model_configs
+from utils.training import *
 
 from torchvision.datasets import CIFAR10
 

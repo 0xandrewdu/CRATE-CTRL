@@ -8,7 +8,7 @@ from lion_pytorch import Lion
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from ..models import model_configs
+from models import model_configs
 
 """
 Utils for train.py
@@ -26,7 +26,6 @@ def get_args_parser():
     parser.add_argument("--epochs", type=int, default=1400)
     parser.add_argument("--global-batch-size", type=int, default=256)
     parser.add_argument("--global-seed", type=int, default=0)
-    parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--log-every", type=int, default=100)
     parser.add_argument("--ckpt-every", type=int, default=50_000)
