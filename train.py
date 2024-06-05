@@ -20,13 +20,12 @@ from PIL import Image
 from copy import deepcopy
 from glob import glob
 from time import time
-import argparse
-import logging
-import os
 
 from .utils.loss import *
 from .models import model_configs
 from .utils.training import *
+
+from torchvision.datasets import CIFAR10
 
 #################################################################################
 #                             Training Helper Functions                         #
@@ -92,7 +91,10 @@ def main(args):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
     ])
-    dataset = ImageFolder(args.data_path, transform=transform)
+    
+    #dataset = ImageFolder(args.data_path, transform=transform)
+    dataset = CIFAR10(root='./data', train=True, download=True, transform=transform)
+    
     sampler = DistributedSampler(
         dataset,
         num_replicas=dist.get_world_size(),
