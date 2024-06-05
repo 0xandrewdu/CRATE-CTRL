@@ -25,7 +25,7 @@ class Attention_Decode(nn.Module):
         self.dim_head = dim_head
         self.dropout = nn.Dropout(dropout)
         self.I = nn.Parameter(torch.eye(self.input_dim), requires_grad=False)
-        self.UT = nn.Linear(dim, self.kp, bias=False) 
+        self.UT = nn.Linear(dim, num_heads * dim_head, bias=False) 
         self.attend = nn.Softmax(dim=-1)
         self.scale = scale if scale > 0 else dim_head ** -0.5 
     
