@@ -133,11 +133,11 @@ def training_setup(args, **kwargs):
     model = model_configs[model_name](**kwargs)
     model = DDP(model.to(device))
 
-    if args.optimizer == "AdamW":
+    if args.optim == "AdamW":
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, 
                                     betas=(0.9, 0.999), 
                                     weight_decay=args.weight_decay)                      
-    elif args.optimizer == "Lion":
+    elif args.optim == "Lion":
         optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     else:
         raise NotImplementedError
