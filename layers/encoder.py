@@ -86,6 +86,7 @@ class CRATE_Transformer_Encode(nn.Module):
             print(x.shape)
             z = self.norm_attn(x)
             print(z.shape)
+            print(len(self.attn(z)))
             print(self.attn(z).shape)
             z_half = (z + self.step_size * self.attn(z)) / (1 + self.step_size)
             z_out = self.mlp(self.norm_mlp(z_half))
