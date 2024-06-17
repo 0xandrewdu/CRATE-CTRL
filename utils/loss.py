@@ -62,7 +62,7 @@ def ctrl_objective(
         lambd_mse: float = 0.5,
         normalize: bool = False,
     ) -> torch.Tensor:
-    mse = torch.mean((ZT - ZTU_hat) ** 2)
+    mse = torch.mean((ZT - ZT_hat) ** 2)
     srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize)
     srr_hat = sparse_rate_reduction(ZT_hat, ZTU_hat, lambd=lambd_srr, eps=eps, normalize=normalize)
     return lambd_mse * mse + srr + srr_hat
