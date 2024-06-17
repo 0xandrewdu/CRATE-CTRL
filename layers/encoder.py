@@ -101,7 +101,7 @@ class CRATE_Transformer_Encode(nn.Module):
         """
         if return_proj:
             z = self.norm_attn(x)
-            mssa_out = self.attn(z, return_proj=True)
+            mssa_out = self.attn(z)
             z_half = (z + self.step_size * mssa_out) / (1 + self.step_size)
             z_out, z_halfddt = self.mlp(self.norm_mlp(z_half), return_proj=True)
             z_proj = rearrange(self.attn.UT(self.norm_attn(z_halfddt)), 'b n (h d) -> b h n d', h=self.attn.num_heads)
