@@ -13,13 +13,8 @@ def coding_rate(
     ) -> torch.Tensor: # b | b x h
     n, d = ZT.shape[-2], ZT.shape[-1]
     sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2))
-
-    ### testing
     id = torch.eye(min(d, n)).to(sim.device)
-    print(id.device, sim.device)
-    ###
     output = 0.5 * torch.logdet(id + sim * d / (n * eps ** 2))
-    print(output.shape)
     return output
 
 def rate_reduction(
@@ -38,7 +33,7 @@ def rate_reduction(
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
     output = coding_rate(ZT, eps=eps) - torch.sum(coding_rate(ZTU, eps=eps), dim=1)
-    print(output.shape)
+    print("rate_reduction", output.shape)
     return output
 
 def sparse_rate_reduction(
@@ -60,7 +55,7 @@ def sparse_rate_reduction(
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
     output = rate_reduction(ZT, ZTU, eps=eps) + lambd * ZT.abs().sum(dim=(-1, -2))
-    print(output.shape)
+    print("sparse_rate_reduction", output.shape)
     return output
 
 def ctrl_objective(
