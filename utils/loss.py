@@ -18,8 +18,9 @@ def coding_rate(
     id = torch.eye(min(d, n)).to(sim.device)
     print(id.device, sim.device)
     ###
-
-    return 0.5 * torch.logdet(id + sim * d / (n * eps ** 2))
+    output = 0.5 * torch.logdet(id + sim * d / (n * eps ** 2))
+    print(output.shape)
+    return output
 
 def rate_reduction(
         ZT: torch.Tensor, # b x n x d
@@ -36,7 +37,9 @@ def rate_reduction(
     """
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
-    return coding_rate(ZT, eps=eps) - torch.sum(coding_rate(ZTU, eps=eps), dim=1)
+    output = coding_rate(ZT, eps=eps) - torch.sum(coding_rate(ZTU, eps=eps), dim=1)
+    print(output.shape)
+    return output
 
 def sparse_rate_reduction(
         ZT: torch.Tensor, # b x n x d
@@ -56,7 +59,9 @@ def sparse_rate_reduction(
     """
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
-    return rate_reduction(ZT, ZTU, eps=eps) + lambd * ZT.abs().sum(dim=(-1, -2))
+    output = rate_reduction(ZT, ZTU, eps=eps) + lambd * ZT.abs().sum(dim=(-1, -2))
+    print(output.shape)
+    return output
 
 def ctrl_objective(
         ZT: torch.Tensor, # b x n x d
@@ -71,4 +76,6 @@ def ctrl_objective(
     mse = torch.mean((ZT - ZT_hat) ** 2)
     srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize)
     srr_hat = sparse_rate_reduction(ZT_hat, ZTU_hat, lambd=lambd_srr, eps=eps, normalize=normalize)
-    return lambd_mse * mse + srr + srr_hat
+    output = lambd_mse * mse + srr + srr_hat
+    print(output.shape)
+    return output
