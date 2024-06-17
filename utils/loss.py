@@ -13,6 +13,12 @@ def coding_rate(
     ) -> torch.Tensor: # b | b x h
     n, d = ZT.shape[-2], ZT.shape[-1]
     sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2))
+
+    ### testing
+    dummy = torch.eye(min(d, n))
+    print(dummy.device, sim.device)
+    ###
+
     return 0.5 * torch.logdet(torch.eye(min(d, n)) + sim * d / (n * eps ** 2))
 
 def rate_reduction(
