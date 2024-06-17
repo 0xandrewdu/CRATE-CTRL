@@ -23,7 +23,7 @@ class CRATE_CTRL_AE(nn.Module):
 
         # set up patch embedding
         assert image_size % patch_size == 0, "image dimensions must be compatible with patch size"
-        dim = dim or patch_size ** 2
+        dim = dim or (patch_size ** 2) * in_channels
         dim_head = dim_head or dim // num_heads
 
         print(f'dim_head: {dim_head}')
