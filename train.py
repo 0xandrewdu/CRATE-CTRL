@@ -138,7 +138,6 @@ def main(args):
             loss = torch.mean(ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse))
             loss.backward()
             opt.step()
-            sched.step()
 
             # Log loss values:
             running_loss += loss.item()
@@ -174,6 +173,7 @@ def main(args):
                     torch.save(checkpoint, checkpoint_path)
                     logger.info(f"Saved checkpoint to {checkpoint_path}")
                 dist.barrier()
+        sched.step()
 
     # TODO: do stuff in eval mode, maybe sampling from latent and stuff?
     model.eval()

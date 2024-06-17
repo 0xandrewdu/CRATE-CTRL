@@ -33,7 +33,6 @@ def rate_reduction(
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
     output = coding_rate(ZT, eps=eps) - torch.sum(coding_rate(ZTU, eps=eps), dim=1)
-    print("rate_reduction", output.shape)
     return output
 
 def sparse_rate_reduction(
@@ -55,7 +54,6 @@ def sparse_rate_reduction(
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
     output = rate_reduction(ZT, ZTU, eps=eps) + lambd * ZT.abs().sum(dim=(-1, -2))
-    print("sparse_rate_reduction", output.shape)
     return output
 
 def ctrl_objective(
@@ -72,5 +70,4 @@ def ctrl_objective(
     srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize)
     srr_hat = sparse_rate_reduction(ZT_hat, ZTU_hat, lambd=lambd_srr, eps=eps, normalize=normalize)
     output = lambd_mse * mse + srr + srr_hat
-    print(output.shape)
     return output
