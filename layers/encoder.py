@@ -32,7 +32,6 @@ class Attention_Encode(nn.Module):
     def forward(
             self,
             ZT: torch.Tensor,
-            return_proj=False,
         ) -> torch.Tensor:
         # multiplies by the subspace bases by recovering them from the nn.Linear layer as opposed to the
         # new trainable weights W done in the paper's implementation--check with Druv to see if this is ok
@@ -47,7 +46,7 @@ class Attention_Encode(nn.Module):
         SSA_outs = rearrange(SSA_outs, 'b h n d -> b n (h d)')
 
         MSSA_out = torch.matmul(SSA_outs, UT)
-        return (MSSA_out, UT) if return_proj else MSSA_out
+        return MSSA_out
     
 class MLP_Encode_Old(nn.Module):
     """
@@ -73,16 +72,16 @@ class MLP_Encode(nn.Module):
     """
     def __init__(self, dim, dropout=0., step_size=0.1, lambd=0.5):
         super().__init__()
-        self.DT = nn.Parameter(torch.Tensor(dim, dim))
+        self.weight = nn.Parameter(torch.Tensor(dim, dim)) # self.D^T
         with torch.no_grad():
-            init.kaiming_uniform_(self.DT)
+            init.kaiming_uniform_(self.weight)
         self.lambd: float = lambd
         self.step_size = step_size
 
     def forward(self, x, return_proj=False):
-        Z_halfD = F.linear(x, self.DT, bias=None)
-        Z_halfDDT = F.linear(Z_halfD, self.DT.T, bias=None)
-        Z_halfDT = F.linear(x, self.DT.T, bias=None)
+        Z_halfD = F.linear(x, self.weight, bias=None)
+        Z_halfDDT = F.linear(Z_halfD, self.weight.T, bias=None)
+        Z_halfDT = F.linear(x, self.weight.T, bias=None)
         grad_step = x + self.step_size * (Z_halfDT - Z_halfDDT)
         output = F.relu(torch.abs(grad_step) - self.step_size * self.lambd) * torch.sign(grad_step)
         return (output, Z_halfDDT) if return_proj else output
@@ -102,10 +101,10 @@ class CRATE_Transformer_Encode(nn.Module):
         """
         if return_proj:
             z = self.norm_attn(x)
-            mssa_out, ut = self.attn(z, return_proj=True)
+            mssa_out = self.attn(z, return_proj=True)
             z_half = (z + self.step_size * mssa_out) / (1 + self.step_size)
             z_out, z_halfddt = self.mlp(self.norm_mlp(z_half), return_proj=True)
-            z_proj = F.linear(z_halfddt, ut, bias=None)
+            z_proj = rearrange(self.attn.UT(self.norm_attn(z_halfddt)), 'b n (h d) -> b h n d', h=self.attn.num_heads)
             return z_out, z_proj
         else:
             z = self.norm_attn(x)
