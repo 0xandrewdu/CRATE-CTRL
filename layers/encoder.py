@@ -47,9 +47,9 @@ class Attention_Encode(nn.Module):
         SSA_outs = rearrange(SSA_outs, 'b h n d -> b n (h d)')
 
         MSSA_out = torch.matmul(SSA_outs, UT)
-        return (MSSA_out, ZTU) if return_proj else MSSA_out
+        return (MSSA_out, UT) if return_proj else MSSA_out
     
-class MLP_Encode_Nonnegative(nn.Module):
+class MLP_Encode_Old(nn.Module):
     """
     Instead of using ISTA step, explicitly solves for non-negative LASSO solution. It turns out that for nonnegative
     LASSO, since D is orthogonal w.h.p. and stays so, the closed form LASSO solution is just ReLU of MLP on Z^{l + 1/2}
@@ -63,40 +63,50 @@ class MLP_Encode_Nonnegative(nn.Module):
             init.kaiming_uniform_(self.weight)
         self.lambd: float = lambd
 
-    def forward(self, x):
-        return F.relu((self.lambd / 2.0) + F.linear(x, self.weight, bias=None))
+    def forward(self, Z_half):
+        return F.relu((self.lambd / 2.0) + F.linear(Z_half, self.weight, bias=None))
     
 class MLP_Encode(nn.Module):
     """
     Reverts to solution without assumption of orthogonality, but removes non-negativity from objective to make
     sampling from latent support negatives
     """
-    def __init__(self, dim, dropout=0., lambd=0.1):
+    def __init__(self, dim, dropout=0., step_size=0.1, lambd=0.5):
         super().__init__()
-        self.weight = nn.Parameter(torch.Tensor(dim, dim))
+        self.DT = nn.Parameter(torch.Tensor(dim, dim))
         with torch.no_grad():
-            init.kaiming_uniform_(self.weight)
+            init.kaiming_uniform_(self.DT)
         self.lambd: float = lambd
+        self.step_size = step_size
 
-    def forward(self, x):
-        return F.relu((self.lambd / 2.0) + F.linear(x, self.weight, bias=None))
+    def forward(self, x, return_proj=False):
+        Z_halfD = F.linear(x, self.DT, bias=None)
+        Z_halfDDT = F.linear(Z_halfD, self.DT.T, bias=None)
+        Z_halfDT = F.linear(x, self.DT.T, bias=None)
+        grad_step = x + self.step_size * (Z_halfDT - Z_halfDDT)
+        output = F.relu(torch.abs(grad_step) - self.step_size * self.lambd) * torch.sign(grad_step)
+        return (output, Z_halfDDT) if return_proj else output
     
 class CRATE_Transformer_Encode(nn.Module):
-    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., step_size=1.):
+    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., mlp_step_size=0.1, lasso_lambd=0.5, step_size=1.):
         super().__init__()
         self.norm_attn, self.norm_mlp = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.attn = Attention_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout)
-        self.mlp = MLP_Encode(dim=dim, dropout=dropout)
+        self.mlp = MLP_Encode(dim=dim, dropout=dropout, step_size=mlp_step_size, lambd=lasso_lambd)
         self.step_size = step_size
     
     def forward(self, x, return_proj=False):
+        """
+        If return_proj is on (only for last layer in training), also returns the transformation of the projected
+        tokens by calculating U^T D Z^{l+1} and returning as a second output
+        """
         if return_proj:
             z = self.norm_attn(x)
-            mssa_out, ztu = self.attn(z, return_proj=True)
+            mssa_out, ut = self.attn(z, return_proj=True)
             z_half = (z + self.step_size * mssa_out) / (1 + self.step_size)
-            z_out = self.mlp(self.norm_mlp(z_half))
-            ztu_out = self.mlp(self.norm_mlp(ztu))
-            return z_out, ztu_out
+            z_out, z_halfddt = self.mlp(self.norm_mlp(z_half), return_proj=True)
+            z_proj = F.linear(z_halfddt, ut, bias=None)
+            return z_out, z_proj
         else:
             z = self.norm_attn(x)
             z_half = (z + self.step_size * self.attn(z)) / (1 + self.step_size)
