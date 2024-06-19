@@ -144,6 +144,7 @@ def main(args):
                     print(f"{name} info:")
                     print("shape:", tens.shape)
                     print("number nan:", torch.isnan(tens).sum().item())
+                    print(tens)
                     print("")
                     debug_print = True
 
