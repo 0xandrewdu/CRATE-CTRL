@@ -137,6 +137,7 @@ def main(args):
             x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x)
             
             # debug printing: 
+            debug_print = False
             if train_steps % args.log_every == 0:
                 varnames = ["ZT", "ZTU", "ZT_hat", "ZTU_hat"]
                 for name, tens in zip(varnames, [ZT, ZTU, ZT_hat, ZTU_hat]):
@@ -144,8 +145,9 @@ def main(args):
                     print("shape:", tens.shape)
                     print("number nan:", torch.isnan(tens).sum().item())
                     print("")
+                    debug_print = True
 
-            loss = torch.mean(ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse))
+            loss = torch.mean(ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse, debug=debug_print))
             loss.backward()
             opt.step()
 

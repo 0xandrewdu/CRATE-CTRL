@@ -65,9 +65,20 @@ def ctrl_objective(
         lambd_srr: float = 0.1,
         lambd_mse: float = 0.5,
         normalize: bool = False,
+        debug: bool = False,
     ) -> torch.Tensor:
     mse = torch.mean((ZT - ZT_hat) ** 2)
     srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize)
     srr_hat = sparse_rate_reduction(ZT_hat, ZTU_hat, lambd=lambd_srr, eps=eps, normalize=normalize)
+
+    if debug:
+        names = ["mse", "srr", "srr_hat"]
+        tensors = [mse, srr, srr_hat]
+        for name, tens in zip(names, tensors):
+            print(f"{name} info:")
+            print("shape:", tens.shape)
+            print("number nan:", torch.isnan(tens).sum().item())
+            print("")
+
     output = lambd_mse * mse + srr + srr_hat
     return output
