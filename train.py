@@ -135,6 +135,7 @@ def main(args):
             
             opt.zero_grad()
             x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x)
+            print("shapes:", ZT.shape, ZTU.shape, ZT_hat.shape, ZTU_hat.shape)
             loss = torch.mean(ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse))
             loss.backward()
             opt.step()
