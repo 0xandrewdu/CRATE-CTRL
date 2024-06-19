@@ -22,6 +22,7 @@ def rate_reduction(
         ZTU: torch.Tensor, # b x h x n x d
         eps: float = 0.01,
         normalize: bool = False,
+        debug: bool = False,
     ) -> torch.Tensor:
     """
     Computes the rate reduction, defined as the coding rate of the tokens minus sum of the coding 
@@ -32,7 +33,17 @@ def rate_reduction(
     """
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
-    output = coding_rate(ZT, eps=eps) - torch.sum(coding_rate(ZTU, eps=eps), dim=1)
+    zt_cr = coding_rate(ZT, eps=eps)
+    ztu_cr = torch.sum(coding_rate(ZTU, eps=eps), dim=1)
+    if debug:
+        names = ["zt_cr", "ztu_cr"]
+        tensors = [zt_cr, ztu_cr]
+        for name, tens in zip(names, tensors):
+            print(f"{name} info:")
+            print("shape:", tens.shape)
+            print("number nan:", torch.isnan(tens).sum().item())
+            print("")
+    output = zt_cr - ztu_cr
     return output
 
 def sparse_rate_reduction(
@@ -54,7 +65,7 @@ def sparse_rate_reduction(
     """
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
-    rr = rate_reduction(ZT, ZTU, eps=eps)
+    rr = rate_reduction(ZT, ZTU, eps=eps, debug=debug)
     lasso = ZT.abs().sum(dim=(-1, -2))
     if debug:
         names = ["rr", "lasso"]
