@@ -41,6 +41,7 @@ def sparse_rate_reduction(
         eps: float = 0.01,
         lambd: float = 0.1,
         normalize: bool = False,
+        debug: bool = False,
     ) -> torch.Tensor:
     """
     Adds a LASSO penalization term to the above rate reduction function
@@ -53,7 +54,17 @@ def sparse_rate_reduction(
     """
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
-    output = rate_reduction(ZT, ZTU, eps=eps) + lambd * ZT.abs().sum(dim=(-1, -2))
+    rr = rate_reduction(ZT, ZTU, eps=eps)
+    lasso = ZT.abs().sum(dim=(-1, -2))
+    if debug:
+        names = ["rr", "lasso"]
+        tensors = [rr, lasso]
+        for name, tens in zip(names, tensors):
+            print(f"{name} info:")
+            print("shape:", tens.shape)
+            print("number nan:", torch.isnan(tens).sum().item())
+            print("")
+    output = rr + lambd * lasso
     return output
 
 def ctrl_objective(
@@ -68,8 +79,10 @@ def ctrl_objective(
         debug: bool = False,
     ) -> torch.Tensor:
     mse = torch.mean((ZT - ZT_hat) ** 2)
-    srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize)
-    srr_hat = sparse_rate_reduction(ZT_hat, ZTU_hat, lambd=lambd_srr, eps=eps, normalize=normalize)
+    if debug: print("ZT, ZTU srr:")
+    srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize, debug=debug)
+    if debug: print("ZT_hat, ZTU_hat srr:")
+    srr_hat = sparse_rate_reduction(ZT_hat, ZTU_hat, lambd=lambd_srr, eps=eps, normalize=normalize, debug=debug)
 
     if debug:
         names = ["mse", "srr", "srr_hat"]
