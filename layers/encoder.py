@@ -79,12 +79,17 @@ class MLP_Encode(nn.Module):
         self.step_size = step_size
 
     def forward(self, x, return_proj=False):
-        Z_halfD = F.linear(x, self.weight, bias=None)
-        Z_halfDDT = F.linear(Z_halfD, self.weight.T, bias=None)
-        Z_halfDT = F.linear(x, self.weight.T, bias=None)
-        grad_step = x + self.step_size * (Z_halfDT - Z_halfDDT)
-        output = F.relu(torch.abs(grad_step) - self.step_size * self.lambd) * torch.sign(grad_step)
-        return (output, Z_halfDDT) if return_proj else output
+        Z_halfDT = F.linear(x, self.weight, bias=None)
+        Z_halfDTD = F.linear(Z_halfDT, self.weight.T, bias=None)
+        Z_halfD = F.linear(x, self.weight.T, bias=None)
+        grad_step = x + self.step_size * (Z_halfD - Z_halfDTD)
+
+        nonneg = True
+        if nonneg:
+            output = F.relu(torch.abs(grad_step) - self.step_size * self.lambd)
+        else:
+            output = F.relu(torch.abs(grad_step) - self.step_size * self.lambd) * torch.sign(grad_step)
+        return (output, Z_halfDTD) if return_proj else output
     
 class CRATE_Transformer_Encode(nn.Module):
     def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., mlp_step_size=0.1, lasso_lambd=0.5, step_size=1.):
