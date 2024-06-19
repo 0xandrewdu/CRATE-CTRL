@@ -135,7 +135,16 @@ def main(args):
             
             opt.zero_grad()
             x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x)
-            print("shapes:", ZT.shape, ZTU.shape, ZT_hat.shape, ZTU_hat.shape)
+            
+            # debug printing: 
+            if train_steps % args.log_every == 0:
+                varnames = ["ZT", "ZTU", "ZT_hat", "ZTU_hat"]
+                for name, tens in zip(varnames, [ZT, ZTU, ZT_hat, ZTU_hat]):
+                    print(f"{name} info:")
+                    print("shape:", tens.shape)
+                    print("number nan:", torch.isnan(tens.view(-1)).sum().item())
+                    print("")
+
             loss = torch.mean(ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse))
             loss.backward()
             opt.step()
