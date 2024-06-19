@@ -10,11 +10,12 @@ import torch.nn.init as init
 def coding_rate(
         ZT: torch.Tensor, # b x n x d | b x h x n x d
         eps: float = 0.01,
+        logdet_eps: float = 10 ** -6, # to avoid negative eigenvals due to numerical precision issues in logdet
         debug: bool = False,
     ) -> torch.Tensor: # b | b x h
     n, d = ZT.shape[-2], ZT.shape[-1]
-    sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2))
     id = torch.eye(min(d, n)).to(sim.device)
+    sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2)) + id * logdet_eps
     output = 0.5 * torch.logdet(id + sim * d / (n * (eps ** 2)))
     if debug:
         names = ["sim", "id", "output"]
