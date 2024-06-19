@@ -121,6 +121,11 @@ def CTRL_CIFAR10_Base(**kwargs):
     model = CRATE_CTRL_AE(depth=12, num_heads=10, image_size=32, patch_size=8, **kwargs)
     return model
 
+def CTRL_CIFAR10_Testing(**kwargs):
+    model = CRATE_CTRL_AE(depth=2, num_heads=10, image_size=32, patch_size=8, **kwargs)
+    return model
+
 model_configs = {
     'CIFAR10-B': CTRL_CIFAR10_Base,
+    'CIFAR10-T': CTRL_CIFAR10_Testing,
 }
