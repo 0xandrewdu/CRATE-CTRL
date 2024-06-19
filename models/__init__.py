@@ -88,9 +88,12 @@ class CRATE_CTRL_AE(nn.Module):
         imgs = x.reshape(shape=(x.shape[0], 3, h * p, h * p))
         return imgs
     
-    def encode(self, x):
+    def encode(self, x, debug=False):
+        if debug: print(x)
         x = self.patch_embed(x)
+        if debug: print(x)
         x = x + self.pos_embed
+        if debug: print(x)
         for block in self.encoders[:-1]:
             x = block(x)
         Z, ZTU = self.encoders[-1](x, return_proj=True)
@@ -103,8 +106,8 @@ class CRATE_CTRL_AE(nn.Module):
         x = self.unpatchify(x)
         return x
 
-    def forward(self, x):
-        Z, ZTU = self.encode(x)
+    def forward(self, x, debug=False):
+        Z, ZTU = self.encode(x, debug=debug)
         x_hat = self.decode(Z)
         Z_hat, ZTU_hat = self.encode(x_hat)
         return x_hat, Z, ZTU, Z_hat, ZTU_hat

@@ -134,11 +134,12 @@ def main(args):
             y = y.to(device) # currently the label is not used for any purpose
             
             opt.zero_grad()
-            x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x)
+            debug_print = False
+            x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x, debug=debug_print)
             
             # debug printing: 
-            debug_print = False
             if train_steps % args.log_every == 0:
+                print(x)
                 varnames = ["ZT", "ZTU", "ZT_hat", "ZTU_hat"]
                 for name, tens in zip(varnames, [ZT, ZTU, ZT_hat, ZTU_hat]):
                     print(f"{name} info:")
