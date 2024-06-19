@@ -10,11 +10,20 @@ import torch.nn.init as init
 def coding_rate(
         ZT: torch.Tensor, # b x n x d | b x h x n x d
         eps: float = 0.01,
+        debug: bool = False,
     ) -> torch.Tensor: # b | b x h
     n, d = ZT.shape[-2], ZT.shape[-1]
     sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2))
     id = torch.eye(min(d, n)).to(sim.device)
     output = 0.5 * torch.logdet(id + sim * d / (n * eps ** 2))
+    if debug:
+        names = ["sim", "id", "output"]
+        tensors = [sim, id, output]
+        for name, tens in zip(names, tensors):
+            print(f"{name} info:")
+            print("shape:", tens.shape)
+            print("number nan:", torch.isnan(tens).sum().item())
+            print("")
     return output
 
 def rate_reduction(
@@ -33,7 +42,8 @@ def rate_reduction(
     """
     if normalize:
         ZT, ZTU = F.layer_norm(ZT, ZT.shape[-2:]), F.layer_norm(ZTU, ZTU.shape[-2:])
-    zt_cr = coding_rate(ZT, eps=eps)
+    print("coding rate info:")
+    zt_cr = coding_rate(ZT, eps=eps, debug=debug)
     ztu_cr = torch.sum(coding_rate(ZTU, eps=eps), dim=1)
     if debug:
         names = ["zt_cr", "ztu_cr"]
