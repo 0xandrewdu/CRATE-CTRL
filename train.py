@@ -134,11 +134,11 @@ def main(args):
             y = y.to(device) # currently the label is not used for any purpose
             
             opt.zero_grad()
-            debug_print = False
+            debug_print = train_steps % args.log_every == 0
             x_hat, ZT, ZTU, ZT_hat, ZTU_hat = model(x, debug=debug_print)
             
             # debug printing: 
-            if train_steps % args.log_every == 0:
+            if debug_print:
                 print(x)
                 varnames = ["ZT", "ZTU", "ZT_hat", "ZTU_hat"]
                 for name, tens in zip(varnames, [ZT, ZTU, ZT_hat, ZTU_hat]):
@@ -147,7 +147,6 @@ def main(args):
                     print("number nan:", torch.isnan(tens).sum().item())
                     print(tens)
                     print("")
-                    debug_print = True
 
             loss = torch.mean(ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse, debug=debug_print))
             loss.backward()
