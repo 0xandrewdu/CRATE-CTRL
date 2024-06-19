@@ -142,7 +142,7 @@ def main(args):
                 for name, tens in zip(varnames, [ZT, ZTU, ZT_hat, ZTU_hat]):
                     print(f"{name} info:")
                     print("shape:", tens.shape)
-                    print("number nan:", torch.isnan(tens.view(-1)).sum().item())
+                    print("number nan:", torch.isnan(tens).sum().item())
                     print("")
 
             loss = torch.mean(ctrl_objective(ZT, ZTU, ZT_hat, ZTU_hat, lambd_srr=lambd_srr, lambd_mse=lambd_mse))
