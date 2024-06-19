@@ -25,7 +25,7 @@ def coding_rate(
             print("shape:", tens.shape)
             print("number nan:", torch.isnan(tens).sum().item())
             print("")
-        print("sim eigvals:". torch.linalg.eigvals(sim))
+        print("sim eigvals:", torch.linalg.eigvals(sim))
     return output
 
 def rate_reduction(
