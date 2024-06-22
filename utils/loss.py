@@ -9,7 +9,7 @@ import torch.nn.init as init
 
 def coding_rate(
         ZT: torch.Tensor, # b x n x d | b x h x n x d
-        eps: float = 0.01,
+        eps: float = 0.1,
         logdet_eps: float = 10 ** -6, # to avoid negative eigenvals due to numerical precision issues in logdet
         debug: bool = False,
     ) -> torch.Tensor: # b | b x h
