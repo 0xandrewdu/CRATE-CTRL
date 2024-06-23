@@ -96,7 +96,7 @@ class CRATE_CTRL_AE(nn.Module):
             x = block(x)
             if debug:
                 print(f"after layer {i}:")
-                print(x[0, 0, :])
+                print(x[0, :])
         Z, ZTU = self.encoders[-1](x, return_proj=True)
         return Z, ZTU
 
