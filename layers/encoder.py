@@ -70,7 +70,7 @@ class MLP_Encode(nn.Module):
     Reverts to solution without assumption of orthogonality, but removes non-negativity from objective to make
     sampling from latent support negatives
     """
-    def __init__(self, dim, dropout=0., step_size=0.1, lambd=0.5):
+    def __init__(self, dim, dropout=0., step_size=0.5, lambd=0.5):
         super().__init__()
         self.weight = nn.Parameter(torch.Tensor(dim, dim)) # self.D^T
         with torch.no_grad():
@@ -92,7 +92,7 @@ class MLP_Encode(nn.Module):
         return (output, Z_halfDTD) if return_proj else output
     
 class CRATE_Transformer_Encode(nn.Module):
-    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., mlp_step_size=0.1, lasso_lambd=0.5, step_size=1.):
+    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., mlp_step_size=0.5, lasso_lambd=0.5, step_size=1.):
         super().__init__()
         self.norm_attn, self.norm_mlp = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.attn = Attention_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout)
@@ -108,11 +108,13 @@ class CRATE_Transformer_Encode(nn.Module):
             z = self.norm_attn(x)
             mssa_out = self.attn(z)
             z_half = (z + self.step_size * mssa_out) / (1 + self.step_size)
-            z_out, z_halfddt = self.mlp(self.norm_mlp(z_half), return_proj=True)
+            z_half_norm = self.norm_mlp(z_half)
+            z_out, z_halfddt = self.mlp(z_half_norm, return_proj=True)
             z_proj = rearrange(self.attn.UT(self.norm_attn(z_halfddt)), 'b n (h d) -> b h n d', h=self.attn.num_heads)
             return z_out, z_proj
         else:
             z = self.norm_attn(x)
             z_half = (z + self.step_size * self.attn(z)) / (1 + self.step_size)
-            z_out = self.mlp(self.norm_mlp(z_half))
+            z_half_norm = self.norm_mlp(z_half)
+            z_out = self.mlp(z_half_norm)
             return z_out
