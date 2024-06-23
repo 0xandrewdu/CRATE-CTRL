@@ -89,13 +89,14 @@ class CRATE_CTRL_AE(nn.Module):
         return imgs
     
     def encode(self, x, debug=False):
-        if debug: print(x)
         x = self.patch_embed(x)
-        if debug: print(x)
         x = x + self.pos_embed
-        if debug: print(x)
-        for block in self.encoders[:-1]:
+        if debug: print("input:", x)
+        for i, block in enumerate(self.encoders[:-1]):
             x = block(x)
+            if debug:
+                print(f"after layer {i}:")
+                print(x)
         Z, ZTU = self.encoders[-1](x, return_proj=True)
         return Z, ZTU
 

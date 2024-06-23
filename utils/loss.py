@@ -89,7 +89,7 @@ def sparse_rate_reduction(
             print("shape:", tens.shape)
             print("number nan:", torch.isnan(tens).sum().item())
             print("")
-    output = rr + lambd * lasso
+    output = lambd * lasso - rr
     return output
 
 def ctrl_objective(
@@ -118,5 +118,5 @@ def ctrl_objective(
             print("number nan:", torch.isnan(tens).sum().item())
             print("")
 
-    output = lambd_mse * mse + srr + srr_hat
+    output = lambd_mse * mse - srr - srr_hat
     return output
