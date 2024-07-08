@@ -116,6 +116,11 @@ def ctrl_objective(
         normalize: bool = False,
         debug: bool = False,
     ) -> torch.Tensor:
+    """
+    Initial formulation of the rate reduction closed loop transcription loss with a lasso
+    term for sparsity. Dropped in favor of an alternating training scheme to allow for
+    different learning rates of the encoding and decoding components of the network.
+    """
     mse = torch.mean((ZT - ZT_hat) ** 2)
     if debug: print("ZT, ZTU srr:")
     srr = sparse_rate_reduction(ZT, ZTU, lambd=lambd_srr, eps=eps, normalize=normalize, debug=debug)
@@ -133,3 +138,31 @@ def ctrl_objective(
 
     output = lambd_mse * mse - srr - srr_hat
     return output
+
+def ctrl_objective_encoder(
+        ZT: torch.Tensor, # b x n x d
+        ZTU: torch.Tensor, # b x h x n x d
+        ZT_hat: torch.Tensor, # b x n x d
+        ZTU_hat: torch.Tensor, # b x h x n x d
+        eps: float = 0.01,
+        lambd_srr: float = 0.1,
+        lambd_mse: float = 0.5,
+        normalize: bool = False,
+        debug: bool = False,
+    ) -> torch.Tensor:
+    """"""
+    raise NotImplementedError
+
+def ctrl_objective_decoder(
+        ZT: torch.Tensor, # b x n x d
+        ZTU: torch.Tensor, # b x h x n x d
+        ZT_hat: torch.Tensor, # b x n x d
+        ZTU_hat: torch.Tensor, # b x h x n x d
+        eps: float = 0.01,
+        lambd_srr: float = 0.1,
+        lambd_mse: float = 0.5,
+        normalize: bool = False,
+        debug: bool = False,
+    ) -> torch.Tensor:
+    """"""
+    raise NotImplementedError

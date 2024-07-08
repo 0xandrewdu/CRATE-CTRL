@@ -39,7 +39,7 @@ class CRATE_CTRL_AE(nn.Module):
 
         for _ in range(depth):
             # NOTE: step_size is not true step size, see CRATE_Transformer forward()
-            encoder = CRATE_Transformer_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, step_size=step_size)
+            encoder = CRATE_Transformer_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, attn_step_size=step_size)
             decoder = CRATE_Transformer_Decode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout, step_size=step_size)
             decoder.norm_attn.weight, decoder.norm_attn.bias = encoder.norm_attn.weight, encoder.norm_attn.bias
             decoder.norm_mlp.weight, decoder.norm_mlp.bias = encoder.norm_mlp.weight, encoder.norm_mlp.bias
