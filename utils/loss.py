@@ -7,17 +7,30 @@ from einops.layers.torch import Rearrange
 import torch.nn.functional as F
 import torch.nn.init as init
 
+def logdet(
+        sim: torch.Tensor  # b x ((d x d) | (n x n)) || b x h x ((d x d) | (n x n))
+    ) -> torch.Tensor:
+    """
+    A faster and more numerically stable logdet for our purposes, referencing the CTRL paper.
+    """
+    return 2 * torch.sum(torch.log(torch.diag(torch.linalg.cholesky(sim))))
+
 def coding_rate(
         ZT: torch.Tensor, # b x n x d | b x h x n x d
-        eps: float = 0.1,
+        eps: float = 0.5,
         logdet_eps: float = 10 ** -6, # to avoid negative eigenvals due to numerical precision issues in logdet
         debug: bool = False,
     ) -> torch.Tensor: # b | b x h
+    """
+    Calculates the coding rate (using a Gaussian codebook) of given set of tokens. When calculating the gramian,
+    takes the transpose if the resulting matrix is smaller (for compactness and better stability when calculating
+    determinant, since having zero valued eigenvalues can sometimes push them to be negative)
+    """
     n, d = ZT.shape[-2], ZT.shape[-1]
     sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2))
     id = torch.eye(min(d, n)).to(sim.device)
     sim = sim + id * logdet_eps
-    output = 0.5 * torch.logdet(id + sim * d / (n * (eps ** 2)))
+    output = 0.5 * logdet(id + sim * d / (n * (eps ** 2)))
     if debug:
         names = ["sim", "id", "output"]
         tensors = [sim, id, output]
