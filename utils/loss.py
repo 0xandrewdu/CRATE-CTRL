@@ -28,8 +28,6 @@ def coding_rate(
     """
     n, d = ZT.shape[-2], ZT.shape[-1]
     sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2))
-    if debug: 
-        print("sim eigvals:", sorted(list(torch.linalg.eigvals(sim))))
     # id = torch.eye(min(d, n)).to(sim.device)
     # sim = sim + id * logdet_eps
     output = 0.5 * logdet(id + sim * d / (n * (eps ** 2)))
