@@ -92,7 +92,7 @@ class MLP_Encode(nn.Module):
         return (output, Z_halfDTD) if return_proj else output
     
 class CRATE_Transformer_Encode(nn.Module):
-    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., mlp_step_size=0.5, lasso_lambd=0.5, attn_step_size=0.5):
+    def __init__(self, dim, num_heads=8, dim_head=8, dropout=0., mlp_step_size=0.5, lasso_lambd=0.5, attn_step_size=0.2):
         super().__init__()
         self.norm_attn, self.norm_mlp = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.attn = Attention_Encode(dim=dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout)
