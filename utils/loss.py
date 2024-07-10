@@ -30,10 +30,9 @@ def coding_rate(
     sim = torch.matmul(ZT.transpose(-1, -2), ZT) if n > d else torch.matmul(ZT, ZT.transpose(-1, -2))
     id = torch.eye(min(d, n)).to(sim.device)
     # sim = sim + id * logdet_eps
-    output = 0.5 * logdet(id + sim * d / (n * (eps ** 2)))
     if debug:
-        names = ["sim", "id", "output"]
-        tensors = [sim, id, output]
+        names = ["sim", "id"]
+        tensors = [sim, id]
         for name, tens in zip(names, tensors):
             print(f"{name} info:")
             print(tens)
@@ -41,6 +40,16 @@ def coding_rate(
             print("number nan:", torch.isnan(tens).sum().item())
             print("")
         print("sim eigvals:", torch.linalg.eigvals(sim))
+    output = 0.5 * logdet(id + sim * d / (n * (eps ** 2)))
+    if debug:
+        names = ["output"]
+        tensors = [output]
+        for name, tens in zip(names, tensors):
+            print(f"{name} info:")
+            print(tens)
+            print("shape:", tens.shape)
+            print("number nan:", torch.isnan(tens).sum().item())
+            print("")
     return output
 
 def rate_reduction(
