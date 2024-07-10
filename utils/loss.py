@@ -31,8 +31,8 @@ def coding_rate(
     id = torch.eye(min(d, n)).to(sim.device)
     # sim = sim + id * logdet_eps
     if debug:
-        names = ["sim", "id"]
-        tensors = [sim, id]
+        names = ["sim"]
+        tensors = [sim]
         for name, tens in zip(names, tensors):
             print(f"{name} info:")
             print(tens)
