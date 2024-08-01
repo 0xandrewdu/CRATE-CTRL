@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import torch.nn.init as init
 
 DEBUG = False
+CHOLESKY_DEBUG = True
 
 def logdet(
         sim: torch.Tensor  # b x ((d x d) | (n x n)) || b x h x ((d x d) | (n x n))
@@ -15,9 +16,7 @@ def logdet(
     """
     A faster and more numerically stable logdet for our purposes, referencing the CTRL paper.
     """
-    if DEBUG:
-      return 2 * torch.sum(torch.log(torch.diagonal(torch.linalg.cholesky(sim), dim1=-1, dim2=-2)), axis=-1)
-    else:
+    if DEBUG or CHOLESKY_DEBUG:
       for test in sim.view(-1, sim.shape[-2], sim.shape[-1]):
         try:
           torch.linalg.cholesky(test)
@@ -25,7 +24,7 @@ def logdet(
           print('not pd:')
           print(test)
           print(torch.linalg.eigvals(test).real)
-      return 2 * torch.sum(torch.log(torch.diagonal(torch.linalg.cholesky(sim), dim1=-1, dim2=-2)), axis=-1)
+    return 2 * torch.sum(torch.log(torch.diagonal(torch.linalg.cholesky(sim), dim1=-1, dim2=-2)), axis=-1)
 
 def coding_rate(
         ZT: torch.Tensor, # b x n x d | b x h x n x d
