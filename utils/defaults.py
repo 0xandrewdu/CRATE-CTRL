@@ -1,0 +1,1 @@
+RR_EPSILON = 0.5
